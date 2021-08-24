@@ -12,7 +12,13 @@ const ballVec = [];
 const obstacles = [
   {
     xPos: getRandomInt(300, 800),
-    yPos: getRandomInt(300, 800),
+    yPos: getRandomInt(0, 400),
+    width: getRandomInt(300, 800),
+    height: 40
+  },
+  {
+    xPos: getRandomInt(300, 800),
+    yPos: getRandomInt(400, 600),
     width: getRandomInt(300, 800),
     height: 40
   }
@@ -47,7 +53,7 @@ function draw() {
 }
 
 function createObstacles() {
-  fill(255, 255, 255);
+  fill(100, 100, 100);
   for (let i = 0; i < obstacles.length; i++) {
     rect(obstacles[i].xPos,
       obstacles[i].yPos,
@@ -77,55 +83,44 @@ function applyStandardMovement(ballvec) {
       ballvec.YVecSpeed = ballvec.YVecSpeed * -1;
     }
   }
-
   if (ballvec.vec.y <= 0) {
     ballvec.YOperation = "Fall";
   }
 
   for (let i = 0; i < obstacles.length; i++) {
-    if((ballvec.vec.y >= obstacles[i].yPos - (ballvec.BallSize/2) && ballvec.vec.y <= obstacles[i].yPos + obstacles[i].height)
-    &&
-    (ballvec.vec.x >= obstacles[i].xPos - (ballvec.BallSize/2) && ballvec.vec.x <= obstacles[i].xPos + obstacles[i].width)){
-      if(ballvec.YOperation == "Rise"){
-        console.log("Bottom Collision!");
-        ballvec.YOperation = "Fall"
-        if (ballvec.YVecSpeed >= 0) {
-          ballvec.YVecSpeed = ballvec.YVecSpeed * -1;
-        }
-      }
-      if(ballvec.YOperation == "Fall"){
-        console.log("Top Collision!");
-        ballvec.YOperation = "Rise"
+    if(ballvec.vec.y >= obstacles[i].yPos - (ballvec.BallSize/2)
+      && ballvec.vec.y <= obstacles[i].yPos + (ballvec.BallSize/2) 
+      && (ballvec.vec.x >= obstacles[i].xPos - (ballvec.BallSize/2)
+      && ballvec.vec.x <= obstacles[i].xPos + obstacles[i].width)){
+        ballvec.YOperation = ballvec.YOperation = "Rise";
         if (ballvec.YVecSpeed <= 0) {
           ballvec.YVecSpeed = ballvec.YVecSpeed * -1;
         }
-
-        if(ballvec.vec.x > obstacles[i].xPos && ballvec.vec.x < (obstacles[i].xPos + obstacles[i].width) && ballvec.YVecSpeed < 1){
+        if(ballvec.YVecSpeed < .5){
           ballvec.vec.y = obstacles[i].yPos - (ballvec.BallSize/2);
         }
-      }
     }
   }
 
   //If the y value is growing, resist the growth.
   //If the y value is shrinking, multiply the growth.
 
-  ballvec.XVecSpeed = ballvec.XVecSpeed - .008;
+  ballvec.XVecSpeed = ballvec.XVecSpeed - .001;
   if (ballvec.XVecSpeed <= 0) {
     ballvec.XVecSpeed = 0;
   }
 
   if (ballvec.XOperation == "Fall" && ballvec.YOperation == "Fall") {
-    ballvec.YVecSpeed = ballvec.YVecSpeed + .1;
+    ballvec.YVecSpeed = ballvec.YVecSpeed + .2;
     ballvec.vec.add(ballvec.XVecSpeed, ballvec.YVecSpeed);
   } else if (ballvec.XOperation == "Rise" && ballvec.YOperation == "Fall") {
-    ballvec.YVecSpeed = ballvec.YVecSpeed + .1;
+    ballvec.YVecSpeed = ballvec.YVecSpeed + .2;
     ballvec.vec.add(-1 * ballvec.XVecSpeed, ballvec.YVecSpeed);
   } else if (ballvec.XOperation == "Fall" && ballvec.YOperation == "Rise") {
-    ballvec.YVecSpeed = ballvec.YVecSpeed - .7;
+    ballvec.YVecSpeed = ballvec.YVecSpeed - 1;
     ballvec.vec.add(ballvec.XVecSpeed, -1 * ballvec.YVecSpeed);
   } else if (ballvec.XOperation == "Rise" && ballvec.YOperation == "Rise") {
-    ballvec.YVecSpeed = ballvec.YVecSpeed - .7;
+    ballvec.YVecSpeed = ballvec.YVecSpeed - 1;
     ballvec.vec.add(-1 * ballvec.XVecSpeed, -1 * ballvec.YVecSpeed);
   }
 
