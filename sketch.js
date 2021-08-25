@@ -2,12 +2,12 @@
 
 Total_Balls = 1;
 Balls = [];
-Gravity = .1;
-TerminalVelocity = 10;
+Gravity = .001;
+TerminalVelocity = 30;
 
 
 function setup() {
-	createCanvas(windowWidth, windowHeight);
+	createCanvas((windowWidth-25), windowHeight);
 	frameRate(60);
 	for(let i = 0; i < Total_Balls; i++){
 		Balls[i] = {
@@ -17,9 +17,9 @@ function setup() {
 				B: getRandomInt(100, 255)
 			},
 			Size: getRandomInt(5,15),
-			Vec: createVector(windowWidth/2, windowHeight/2),
+			Vec: createVector((windowWidth-25)/2, windowHeight/2),
 			XSpeed: getRandomInt(-10, 10),
-			YSpeed: getRandomInt(-10, 10),
+			YSpeed: getRandomInt(-15, 15),
 			PreviousPositions: []
 		}
 	}
@@ -54,15 +54,16 @@ function draw() {
 				Balls[i].PreviousPositions[j].currentY);
 		}
 
+                //Detect direction.
 		if(positionLog.previousY > positionLog.currentY){
-			Balls[i].YSpeed = Balls[i].YSpeed + ((TerminalVelocity - Math.abs(Balls[i].YSpeed)) * Gravity);
+			Balls[i].YSpeed = Balls[i].YSpeed + (1/(TerminalVelocity - Math.abs(Balls[i].YSpeed) * Gravity));
 		}else {
-			Balls[i].YSpeed = Balls[i].YSpeed + ((TerminalVelocity - Math.abs(Balls[i].YSpeed)) * Gravity);
+			Balls[i].YSpeed = Balls[i].YSpeed + (1/(TerminalVelocity - Math.abs(Balls[i].YSpeed) * Gravity));
 		}
 
 		//Collision with walls
 		if(Balls[i].Vec.x <= 0 + Balls[i].Size/2
-			|| Balls[i].Vec.x >= windowWidth - Balls[i].Size/2){
+			|| Balls[i].Vec.x >= (windowWidth-25) - Balls[i].Size/2){
 			Balls[i].XSpeed = Balls[i].XSpeed * -1;
 		}
 
@@ -73,7 +74,7 @@ function draw() {
 			//If the ball sinks too far below the window, and we set the upward motion too low to escape, we end up triggering a second bounce
 			//outside the bounds of the screen. For that reason, we need to reset the ball postion to windowHeight on bounce, each time.
 			Balls[i].Vec.y = windowHeight - Balls[i].Size/2;
-		}
+                }
 
 		//End Wall Collision
 
