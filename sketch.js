@@ -2,6 +2,8 @@
 
 Total_Balls = 1;
 Balls = [];
+Gravity = .1;
+TerminalVelocity = 10;
 
 
 function setup() {
@@ -52,6 +54,12 @@ function draw() {
 				Balls[i].PreviousPositions[j].currentY);
 		}
 
+		if(positionLog.previousY > positionLog.currentY){
+			Balls[i].YSpeed = Balls[i].YSpeed + ((TerminalVelocity - Math.abs(Balls[i].YSpeed)) * Gravity);
+		}else {
+			Balls[i].YSpeed = Balls[i].YSpeed + ((TerminalVelocity - Math.abs(Balls[i].YSpeed)) * Gravity);
+		}
+
 		//Collision with walls
 		if(Balls[i].Vec.x <= 0 + Balls[i].Size/2
 			|| Balls[i].Vec.x >= windowWidth - Balls[i].Size/2){
@@ -60,12 +68,18 @@ function draw() {
 
 		if(Balls[i].Vec.y >= windowHeight - Balls[i].Size/2
 			|| Balls[i].Vec.y <= 0 + Balls[i].Size/2){
-			Balls[i].YSpeed = Balls[i].YSpeed * -1
+			Balls[i].YSpeed = Balls[i].YSpeed * -.75;
+
+			//If the ball sinks too far below the window, and we set the upward motion too low to escape, we end up triggering a second bounce
+			//outside the bounds of the screen. For that reason, we need to reset the ball postion to windowHeight on bounce, each time.
+			Balls[i].Vec.y = windowHeight - Balls[i].Size/2;
 		}
+
 		//End Wall Collision
-		
+
 		fill(Balls[i].Color.R, Balls[i].Color.G, Balls[i].Color.B);
 		circle(Balls[i].Vec.x, Balls[i].Vec.y, Balls[i].Size);
+		console.log(Balls[i].YSpeed);
 	}
 }
 
