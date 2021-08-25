@@ -18,8 +18,8 @@ function setup() {
 			},
 			Size: getRandomInt(5,15),
 			Vec: createVector((windowWidth-25)/2, windowHeight/2),
-			XSpeed: getRandomInt(-10, 10),
-			YSpeed: getRandomInt(-15, 15),
+			XSpeed: getRandomInt(-3, 3),
+			YSpeed: getRandomInt(-3, 3),
 			PreviousPositions: []
 		}
 	}
@@ -36,6 +36,12 @@ function draw() {
 		};
 		Balls[i].Vec.x = Balls[i].Vec.x + Balls[i].XSpeed;
 		Balls[i].Vec.y = Balls[i].Vec.y + Balls[i].YSpeed;
+
+                //Apply coefficient of friction, arrest ball at .1 vector speed
+                Balls[i].XSpeed = Balls[i].XSpeed * .999;
+                if(Math.abs(Balls[i].XSpeed) <= .1){
+                        Balls[i].XSpeed = 0;
+                }
 
 		positionLog.currentX = Balls[i].Vec.x;
 		positionLog.currentY = Balls[i].Vec.y;
