@@ -1,17 +1,88 @@
 //Balls config
 
-Total_Balls = 1;
+Total_Balls = 1000;
 Total_Obstacles = 1;
 Balls = [];
 Obstacles =[];
 Gravity = .001;
 TerminalVelocity = 1;
 
+//Debug mode
+Debug_Mode = false;
+
 
 
 function setup() {
 	createCanvas((windowWidth-25), windowHeight);
 	frameRate(60);
+	initBalls();
+	initObstacles();	
+	textSize(12);
+  	textAlign(CENTER, CENTER);
+}
+
+function draw() {
+	if(!Debug_Mode){
+		clear();
+	}
+	drawObstacles();
+	
+
+	//Balls Stuff
+	for(let i = 0; i < Total_Balls; i++){
+		moveBall(Balls[i]);
+		collideWithWalls(Balls[i]);
+
+		let positionHistoryRecord = Balls[i].PreviousPositions[Balls[i].PreviousPositions.length -1];
+
+
+		for(let j = 0; j < Total_Obstacles; j++){
+			if(checkCollide(Obstacles[j], Balls[i])){
+				if(checkBallYDirection(positionHistoryRecord) === "down"){
+					//Never let the ball bounce from within the obstacle.
+					Balls[i].Vec.y = Obstacles[j].Y - Balls[i].Size/2;
+						
+					//If we're already pretty slow, just halt.
+					if(Balls[i].YSpeed < 3.5 && (Obstacles[j].Y - Balls[i].Size/2) - Balls[i].Vec.y < 10){
+						Balls[i].YSpeed = 0;
+						Balls[i].Vec.y = Obstacles[j].Y - Balls[i].Size/2;
+					}
+				} else {
+					Balls[i].Vec.y = Obstacles[j].Y + Obstacles[j].Height + Balls[i].Size/2;
+				}
+				Balls[i].YSpeed = Balls[i].YSpeed * -.50;
+			}
+		}
+		
+		//Halt on the floor if our speed is low
+		if(Math.abs(Balls[i].YSpeed) < 1 
+			&& (windowHeight - Balls[i].Size/2) - Balls[i].Vec.y < 8){
+			Balls[i].YSpeed = 0;
+			Balls[i].Vec.y = windowHeight - (Balls[i].Size/2);
+		}
+
+		drawBall(Balls[i]);
+		if(Debug_Mode){
+			drawDebugLines(Balls[i].PreviousPositions);
+			drawDebugText(Balls[i]);
+		}
+	}
+}
+
+function getRandomInt(min, max) {
+	return Math.random() * (max - min) + min;
+}
+
+function drawDebugLines(positionHistory){
+	for(let j = 0; j < positionHistory.length; j++){
+		line(positionHistory[j].previousX,
+			positionHistory[j].previousY,
+			positionHistory[j].currentX,
+			positionHistory[j].currentY);
+	}
+}
+
+function initBalls(){
 	for(let i = 0; i < Total_Balls; i++){
 		Balls[i] = {
 			Color: {
@@ -19,14 +90,16 @@ function setup() {
 				G: getRandomInt(100, 255),
 				B: getRandomInt(100, 255)
 			},
-			Size: getRandomInt(5,15),
-			Vec: createVector((windowWidth-25)/2, windowHeight/2),
-			XSpeed: getRandomInt(-10,10),
-			YSpeed: getRandomInt(-20, 0),
+			Size: getRandomInt(15,20),
+			Vec: createVector(windowWidth/2, 150),
+			XSpeed: getRandomInt(-20,20),
+			YSpeed: getRandomInt(-15, 0),
 			PreviousPositions: []
 		}
 	}
+}
 
+function initObstacles(){
 	for(let i = 0; i < Total_Obstacles; i++){
 		Obstacles[i] = {
 			X: windowWidth /4,
@@ -37,96 +110,89 @@ function setup() {
 	}
 }
 
-function draw() {
-	clear();
-
-	//Obstacles Stuff
+function drawObstacles(){
 	for(let i = 0; i < Total_Obstacles; i++){
 		fill(200,200,200);
 		rect(Obstacles[i].X, Obstacles[i].Y, Obstacles[i].Width, Obstacles[i].Height);
 	}
+}
 
-	//Balls Stuff
-	for(let i = 0; i < Total_Balls; i++){
+function drawBall(ball){
+	fill(ball.Color.R, ball.Color.G, ball.Color.B);
+	circle(ball.Vec.x, ball.Vec.y, ball.Size);
+}
 
-		//Move
-		let positionLog = {
-			previousX : Balls[i].Vec.x,
-			previousY : Balls[i].Vec.y
-		};
-		Balls[i].Vec.x = Balls[i].Vec.x + Balls[i].XSpeed;
-		Balls[i].Vec.y = Balls[i].Vec.y + Balls[i].YSpeed;
+function moveBall(ball){
+	let positionHistoryRecord = {
+		previousX : ball.Vec.x,
+		previousY : ball.Vec.y,
+		currentX : null,
+		currentY : null
+	};
+	
+	moveBallInternal(ball);
 
-		//Apply coefficient of friction, arrest ball at .1 vector speed
-		Balls[i].XSpeed = Balls[i].XSpeed * .980;
-		if(Math.abs(Balls[i].XSpeed) <= .2){
-			Balls[i].XSpeed = 0;
-		}
+	positionHistoryRecord.currentX = ball.Vec.x;
+	positionHistoryRecord.currentY = ball.Vec.y;
+	ball.PreviousPositions.push(positionHistoryRecord);
+	
+	ball.YSpeed = ball.YSpeed + (1/(TerminalVelocity - Math.abs(ball.YSpeed) * Gravity));
+}
 
-		positionLog.currentX = Balls[i].Vec.x;
-		positionLog.currentY = Balls[i].Vec.y;
+function moveBallInternal(ball){
+	ball.Vec.x = ball.Vec.x + ball.XSpeed;
+	ball.Vec.y = ball.Vec.y + ball.YSpeed;
 
-		Balls[i].PreviousPositions.push(positionLog);
+	applyFriction(ball, .980);
+}
 
-		for(let j = 0; j < Balls[i].PreviousPositions.length; j++){
-			line(Balls[i].PreviousPositions[j].previousX,
-				Balls[i].PreviousPositions[j].previousY,
-				Balls[i].PreviousPositions[j].currentX,
-				Balls[i].PreviousPositions[j].currentY);
-		}
-
-
-		//Detect direction.
-		Balls[i].YSpeed = Balls[i].YSpeed + (1/(TerminalVelocity - Math.abs(Balls[i].YSpeed) * Gravity));
-
-
-		//Collision with walls
-		if(Balls[i].Vec.x <= 0 + Balls[i].Size/2
-			|| Balls[i].Vec.x >= (windowWidth-25) - Balls[i].Size/2){
-			Balls[i].XSpeed = Balls[i].XSpeed * -1;
-		}
-
-		if(Balls[i].Vec.y >= windowHeight - Balls[i].Size/2
-			|| Balls[i].Vec.y <= 0 + Balls[i].Size/2){
-			Balls[i].YSpeed = Balls[i].YSpeed * -.50;
-
-			//If the ball sinks too far below the window, and we set the upward motion too low to escape, we end up triggering a second bounce
-			//outside the bounds of the screen. For that reason, we need to reset the ball postion to windowHeight on bounce, each time.
-			Balls[i].Vec.y = windowHeight - Balls[i].Size/2;
-		}
-
-		//End Wall Collision
-
-		//Collision with obstacles
-		for(let j = 0; j < Total_Obstacles; j++){
-			if(Balls[i].Vec.x > Obstacles[j].X
-				&& Balls[i].Vec.x < Obstacles[j].X + Obstacles[j].Width
-				&& Balls[i].Vec.y > Obstacles[j].Y - Balls[i].Size/2
-				&& Balls[i].Vec.y < Obstacles[j].Y + Obstacles[j].Height + Balls[i].Size/2){
-				if(positionLog.previousY < positionLog.currentY){
-					Balls[i].Vec.y = Obstacles[j].Y - Balls[i].Size/2;
-						if(Balls[i].YSpeed < 3.5 && (Obstacles[j].Y - Balls[i].Size/2) - Balls[i].Vec.y < 10){
-						Balls[i].YSpeed = 0;
-						Balls[i].Vec.y = Obstacles[j].Y - Balls[i].Size/2;
-					}
-				} else {
-					Balls[i].Vec.y = Obstacles[j].Y + Obstacles[j].Height + Balls[i].Size/2;
-				}
-				Balls[i].YSpeed = Balls[i].YSpeed * -.50;
-			}
-		}
-
-		if(Math.abs(Balls[i].YSpeed) < 1 
-			&& (windowHeight - Balls[i].Size/2) - Balls[i].Vec.y < 8){
-			Balls[i].YSpeed = 0;
-			Balls[i].Vec.y = windowHeight - (Balls[i].Size/2);
-		}
-
-		fill(Balls[i].Color.R, Balls[i].Color.G, Balls[i].Color.B);
-		circle(Balls[i].Vec.x, Balls[i].Vec.y, Balls[i].Size);
+function applyFriction(ball, coefficient){
+	ball.XSpeed = ball.XSpeed * coefficient;
+	if(Math.abs(ball.XSpeed) <= .2){
+		ball.XSpeed = 0;
 	}
 }
 
-function getRandomInt(min, max) {
-	return Math.random() * (max - min) + min;
+function collideWithWalls(ball){
+	if(ball.Vec.x <= 0 + ball.Size/2
+		|| ball.Vec.x >= (windowWidth-25) - ball.Size/2){
+			ball.XSpeed = ball.XSpeed * -1;
+	}
+
+	if(ball.Vec.y >= windowHeight - ball.Size/2
+		|| ball.Vec.y <= 0 + ball.Size/2){
+			ball.YSpeed = ball.YSpeed * -.50;
+		//If the ball sinks too far below the window, and we set the upward motion too low to escape, we end up triggering a second bounce
+		//outside the bounds of the screen. For that reason, we need to reset the ball postion to windowHeight on bounce, each time.
+		ball.Vec.y = windowHeight - ball.Size/2;
+	}
+}
+
+function checkCollide(obstacle, ball){
+	return ball.Vec.x > obstacle.X
+				&& ball.Vec.x < obstacle.X + obstacle.Width
+				&& ball.Vec.y > obstacle.Y - ball.Size/2
+				&& ball.Vec.y < obstacle.Y + obstacle.Height + ball.Size/2;
+}
+
+function checkBallYDirection(positionHistoryRecord){
+	if(positionHistoryRecord.previousY < positionHistoryRecord.currentY){
+		return 'down';
+	} else {
+		return 'up';
+	}
+}
+
+function drawDebugText(ball){
+	text("X:"+truncateDecimals(ball.XSpeed, 0)+" Y:"+truncateDecimals(ball.YSpeed, 0), ball.Vec.x + 50, ball.Vec.y + 4);
+}
+
+function truncateDecimals (num, digits) {
+    var numS = num.toString(),
+        decPos = numS.indexOf('.'),
+        substrLength = decPos == -1 ? numS.length : 1 + decPos + digits,
+        trimmedResult = numS.substr(0, substrLength),
+        finalResult = isNaN(trimmedResult) ? 0 : trimmedResult;
+
+    return parseFloat(finalResult);
 }
