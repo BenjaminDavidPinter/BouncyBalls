@@ -1,6 +1,6 @@
 //Balls config
 
-Total_Balls = 1000;
+Total_Balls = 1;
 Total_Obstacles = 1;
 Balls = [];
 Obstacles =[];
@@ -8,7 +8,7 @@ Gravity = .001;
 TerminalVelocity = 1;
 
 //Debug mode
-Debug_Mode = false;
+Debug_Mode = true;
 
 
 
